@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/webhooks/(.*)",
+      "dest": "/api/webhooks"
+    },
+    {
+      "src": "/api/users/(.*)",
+      "dest": "/api/users"
+    },
+    {
+      "src": "/webhooks/twitter",
+      "dest": "/api/webhooks/twitter"
+    },
+    {
+      "src": "/public/(.*)",
+      "dest": "/public/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/[...path]"
+    }
+  ]
+} 
