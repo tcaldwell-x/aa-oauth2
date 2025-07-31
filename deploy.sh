@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Deploying to Vercel..."
+echo "🚀 Deploying to Vercel"
 
 # Check if vercel CLI is installed
 if ! command -v vercel &> /dev/null; then
