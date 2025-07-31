@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { handleWebhookRoutes } from '../../src/routes/webhookRoutes.js';
+import { handleWebhookRoutes } from '../../src/routes/webhookRoutes';
 
 // Convert VercelRequest to standard Request
 function convertVercelRequestToRequest(vercelReq: VercelRequest): Request {
@@ -33,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(response.status || 200);
       if (response.headers) {
         Object.entries(response.headers).forEach(([key, value]) => {
-          res.setHeader(key, value);
+          res.setHeader(key, value as string);
         });
       }
       return res.send(response.body);

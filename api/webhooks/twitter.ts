@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { handleXEventRoutes } from '../../src/routes/xEventRoutes.js';
+import { handleXEventRoutes } from '../../src/routes/xEventRoutes';
 
 // Dummy broadcast function since WebSockets don't work in serverless
 function broadcastToLiveEventClients(message: string | object) {
@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(response.status || 200);
       if (response.headers) {
         Object.entries(response.headers).forEach(([key, value]) => {
-          res.setHeader(key, value);
+          res.setHeader(key, value as string);
         });
       }
       return res.send(response.body);
