@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "node --loader ts-node/esm api/index.ts",
+    "build": "tsc",
     "start": "node dist/index.js"
   },
   "devDependencies": {
