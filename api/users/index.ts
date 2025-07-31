@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { handleUserRoutes } from '../../src/routes/userRoutes';
+import { handleUserRoutes } from '../../src/routes/userRoutes.js';
 
 // Convert VercelRequest to standard Request
 function convertVercelRequestToRequest(vercelReq: VercelRequest): Request {
@@ -15,21 +15,27 @@ function convertVercelRequestToRequest(vercelReq: VercelRequest): Request {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const url = new URL(req.url || '', `https://${req.headers.host}`);
-  console.log(`[USER_API] ${req.method} ${url.pathname}`);
+  try {
+    const url = new URL(req.url || '', `https://${req.headers.host}`);
+    console.log(`[USER_API] ${req.method} ${url.pathname}`);
 
-  const standardReq = convertVercelRequestToRequest(req);
-  const response = await handleUserRoutes(standardReq, url);
-  
-  if (response) {
-    res.status(response.status || 200);
-    if (response.headers) {
-      Object.entries(response.headers).forEach(([key, value]) => {
-        res.setHeader(key, value);
-      });
+    const standardReq = convertVercelRequestToRequest(req);
+    const response = await handleUserRoutes(standardReq, url);
+    
+    if (response) {
+      res.status(response.status || 200);
+      if (response.headers) {
+        Object.entries(response.headers).forEach(([key, value]) => {
+          res.setHeader(key, value);
+        });
+      }
+      return res.send(response.body);
     }
-    return res.send(response.body);
-  }
 
-  return res.status(404).send('Not Found');
+    return res.status(404).send('Not Found');
+  } catch (error) {
+    console.error('[USER_API] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ error: 'Internal server error', details: errorMessage });
+  }
 } 

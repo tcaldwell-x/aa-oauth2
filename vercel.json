@@ -16,6 +16,10 @@
   ],
   "routes": [
     {
+      "src": "/api/test",
+      "dest": "/api/test"
+    },
+    {
       "src": "/api/webhooks/(.*)",
       "dest": "/api/webhooks"
     },
@@ -35,5 +39,16 @@
       "src": "/(.*)",
       "dest": "/api/[...path]"
     }
-  ]
+  ],
+  "functions": {
+    "api/webhooks/index.ts": {
+      "maxDuration": 30
+    },
+    "api/webhooks/twitter.ts": {
+      "maxDuration": 30
+    },
+    "api/users/index.ts": {
+      "maxDuration": 30
+    }
+  }
 } 

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { handleXEventRoutes } from '../../src/routes/xEventRoutes';
+import { handleXEventRoutes } from '../../src/routes/xEventRoutes.js';
 
 // Dummy broadcast function since WebSockets don't work in serverless
 function broadcastToLiveEventClients(message: string | object) {
@@ -23,23 +23,29 @@ function convertVercelRequestToRequest(vercelReq: VercelRequest): Request {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const url = new URL(req.url || '', `https://${req.headers.host}`);
-  console.log(`[WEBHOOK] ${req.method} ${url.pathname}`);
+  try {
+    const url = new URL(req.url || '', `https://${req.headers.host}`);
+    console.log(`[WEBHOOK] ${req.method} ${url.pathname}`);
 
-  // Convert VercelRequest to standard Request
-  const standardReq = convertVercelRequestToRequest(req);
-  
-  const response = await handleXEventRoutes(standardReq, url, broadcastToLiveEventClients);
-  
-  if (response) {
-    res.status(response.status || 200);
-    if (response.headers) {
-      Object.entries(response.headers).forEach(([key, value]) => {
-        res.setHeader(key, value);
-      });
+    // Convert VercelRequest to standard Request
+    const standardReq = convertVercelRequestToRequest(req);
+    
+    const response = await handleXEventRoutes(standardReq, url, broadcastToLiveEventClients);
+    
+    if (response) {
+      res.status(response.status || 200);
+      if (response.headers) {
+        Object.entries(response.headers).forEach(([key, value]) => {
+          res.setHeader(key, value);
+        });
+      }
+      return res.send(response.body);
     }
-    return res.send(response.body);
-  }
 
-  return res.status(404).send('Not Found');
+    return res.status(404).send('Not Found');
+  } catch (error) {
+    console.error('[WEBHOOK] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ error: 'Internal server error', details: errorMessage });
+  }
 } 
