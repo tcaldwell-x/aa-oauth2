@@ -1,37 +1,42 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Define user type
-interface User {
-  id: string;
-  username: string;
-  screen_name: string;
-  profile_image_url: string;
-  verified: boolean;
-  followers_count: number;
-  friends_count: number;
+// Helper to create a JSON response with logging
+function jsonResponse(status: number, body: any, method: string, pathname: string): any {
+    const bodyStr = JSON.stringify(body);
+    console.log(`[USER_API_RESPONSE] ${method} ${pathname} - Status: ${status}, Body: ${bodyStr}`);
+    return { status, body };
 }
 
-// Mock user data for testing
-const mockUsers: Record<string, User> = {
-  '123': {
-    id: '123',
-    username: 'testuser',
-    screen_name: 'Test User',
-    profile_image_url: 'https://via.placeholder.com/48x48',
-    verified: false,
-    followers_count: 150,
-    friends_count: 75
-  },
-  '456': {
-    id: '456', 
-    username: 'demoaccount',
-    screen_name: 'Demo Account',
-    profile_image_url: 'https://via.placeholder.com/48x48',
-    verified: true,
-    followers_count: 1250,
-    friends_count: 300
-  }
-};
+async function getUserDetails(req: VercelRequest, url: URL, userId: string): Promise<any> {
+    const bearerToken = process.env.X_BEARER_TOKEN;
+    if (!bearerToken) {
+        console.error(`X_BEARER_TOKEN not found for GET /api/users/${userId}.`);
+        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method || 'GET', url.pathname);
+    }
+
+    const twitterApiUrl = `https://api.twitter.com/2/users/${userId}?user.fields=profile_image_url`;
+    console.log(`[DEBUG] Fetching user details from Twitter API: ${twitterApiUrl}`);
+
+    try {
+        const response = await fetch(twitterApiUrl, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${bearerToken}`,
+                "Content-Type": "application/json",
+            },
+        });
+        const responseData = await response.json(); 
+        if (!response.ok) {
+            console.error(`Twitter API GET User Details Error for ID ${userId}: ${response.status} ${response.statusText}`, responseData);
+            return jsonResponse(response.status, { error: "Failed to fetch user details from Twitter API.", details: responseData }, req.method || 'GET', url.pathname);
+        }
+        // The responseData should be in the format: { data: { id, name, username, profile_image_url } }
+        return jsonResponse(200, responseData, req.method || 'GET', url.pathname);
+    } catch (error) {
+        console.error(`Error fetching user details for ID ${userId} from Twitter API:`, error);
+        return jsonResponse(500, { error: "Internal server error while fetching user details." }, req.method || 'GET', url.pathname);
+    }
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -45,25 +50,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // GET - Return user data
     if (req.method === 'GET') {
       if (userId && userId !== 'users') {
-        const user = mockUsers[userId];
-        if (user) {
-          return res.status(200).json({ 
-            data: user,
-            message: 'User retrieved successfully',
-            timestamp: new Date().toISOString()
-          });
-        } else {
-          return res.status(404).json({ 
-            error: 'User not found',
-            details: `User with ID ${userId} does not exist`
-          });
-        }
+        const result = await getUserDetails(req, url, userId);
+        return res.status(result.status).json(result.body);
       } else {
-        // Return list of users
-        return res.status(200).json({ 
-          data: Object.values(mockUsers),
-          message: 'Users retrieved successfully',
-          timestamp: new Date().toISOString()
+        // Return error for list users endpoint (not implemented)
+        return res.status(501).json({ 
+          error: 'List users endpoint not implemented',
+          message: 'Use /api/users/{userId} to get specific user details'
         });
       }
     }
