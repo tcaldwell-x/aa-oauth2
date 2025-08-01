@@ -35,7 +35,7 @@ async function getWebhooks(req: VercelRequest, url: URL): Promise<any> {
     const bearerToken = process.env.X_BEARER_TOKEN;
     if (!bearerToken) {
         console.error("X_BEARER_TOKEN not found in environment variables.");
-        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method, url.pathname);
+        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method || 'GET', url.pathname);
     }
     try {
         const twitterApiUrl = "https://api.twitter.com/2/webhooks";
@@ -48,12 +48,12 @@ async function getWebhooks(req: VercelRequest, url: URL): Promise<any> {
         const data = await response.json(); // Assuming Twitter API always returns JSON or this will throw
         if (!response.ok) {
             console.error(`Twitter API GET Error: ${response.status} ${response.statusText}`, data);
-            return jsonResponse(response.status, { error: "Failed to fetch data from Twitter API.", details: data }, req.method, url.pathname);
+            return jsonResponse(response.status, { error: "Failed to fetch data from Twitter API.", details: data }, req.method || 'GET', url.pathname);
         }
-        return jsonResponse(200, data, req.method, url.pathname);
+        return jsonResponse(200, data, req.method || 'GET', url.pathname);
     } catch (error) {
         console.error("Error fetching from Twitter API (GET /webhooks):", error);
-        return jsonResponse(500, { error: "Internal server error while fetching from Twitter API." }, req.method, url.pathname);
+        return jsonResponse(500, { error: "Internal server error while fetching from Twitter API." }, req.method || 'GET', url.pathname);
     }
 }
 
@@ -61,12 +61,12 @@ async function createWebhook(req: VercelRequest, url: URL): Promise<any> {
     const bearerToken = process.env.X_BEARER_TOKEN;
     if (!bearerToken) {
         console.error("X_BEARER_TOKEN not found for POST /api/webhooks.");
-        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method, url.pathname);
+        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method || 'POST', url.pathname);
     }
     try {
         const body = req.body as { url?: string };
         if (!body.url || typeof body.url !== 'string') {
-            return jsonResponse(400, { error: "Invalid request body: 'url' is required and must be a string." }, req.method, url.pathname);
+            return jsonResponse(400, { error: "Invalid request body: 'url' is required and must be a string." }, req.method || 'POST', url.pathname);
         }
         const twitterApiUrl = "https://api.twitter.com/2/webhooks";
         const response = await fetch(twitterApiUrl, {
@@ -81,9 +81,9 @@ async function createWebhook(req: VercelRequest, url: URL): Promise<any> {
         if (!response.ok) {
             console.error(`Twitter API POST Error: ${response.status}`, responseData);
             // Forward Twitter's error response directly, as it contains useful details
-            return jsonResponse(response.status, responseData, req.method, url.pathname);
+            return jsonResponse(response.status, responseData, req.method || 'POST', url.pathname);
         }
-        return jsonResponse(response.status, responseData, req.method, url.pathname); // Usually 201
+        return jsonResponse(response.status, responseData, req.method || 'POST', url.pathname); // Usually 201
     } catch (error) {
         let errorBody = { error: "Internal server error while creating webhook." };
         let errorStatus = 500;
@@ -92,7 +92,7 @@ async function createWebhook(req: VercelRequest, url: URL): Promise<any> {
             errorStatus = 400;
         }
         console.error("Error creating webhook via Twitter API (POST /webhooks):", error);
-        return jsonResponse(errorStatus, errorBody, req.method, url.pathname);
+        return jsonResponse(errorStatus, errorBody, req.method || 'POST', url.pathname);
     }
 }
 
@@ -100,7 +100,7 @@ async function validateWebhook(req: VercelRequest, url: URL, webhookId: string):
     const bearerToken = process.env.X_BEARER_TOKEN;
     if (!bearerToken) {
         console.error("X_BEARER_TOKEN not found for PUT /api/webhooks/:id.");
-        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method, url.pathname);
+        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method || 'PUT', url.pathname);
     }
     try {
         const twitterApiUrl = `https://api.twitter.com/2/webhooks/${webhookId}`;
@@ -122,12 +122,12 @@ async function validateWebhook(req: VercelRequest, url: URL, webhookId: string):
                 errorDataForClient.details = errorDetails;
             }
             console.error(`Twitter API PUT Error: ${response.status}`, errorDetails);
-            return jsonResponse(response.status, errorDataForClient, req.method, url.pathname);
+            return jsonResponse(response.status, errorDataForClient, req.method || 'PUT', url.pathname);
         }
-        return noContentResponse(req.method, url.pathname); // 204 No Content
+        return noContentResponse(req.method || 'PUT', url.pathname); // 204 No Content
     } catch (error) {
         console.error("Error sending validation request via Twitter API (PUT /webhooks/:id):", error);
-        return jsonResponse(500, { error: "Internal server error while sending validation request." }, req.method, url.pathname);
+        return jsonResponse(500, { error: "Internal server error while sending validation request." }, req.method || 'PUT', url.pathname);
     }
 }
 
@@ -135,7 +135,7 @@ async function deleteWebhook(req: VercelRequest, url: URL, webhookId: string): P
     const bearerToken = process.env.X_BEARER_TOKEN;
     if (!bearerToken) {
         console.error("X_BEARER_TOKEN not found for DELETE /api/webhooks/:id.");
-        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method, url.pathname);
+        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method || 'DELETE', url.pathname);
     }
     try {
         const twitterApiUrl = `https://api.twitter.com/2/webhooks/${webhookId}`;
@@ -156,12 +156,12 @@ async function deleteWebhook(req: VercelRequest, url: URL, webhookId: string): P
                 errorDataForClient.details = errorDetails;
             }
             console.error(`Twitter API DELETE Error: ${response.status}`, errorDetails);
-            return jsonResponse(response.status, errorDataForClient, req.method, url.pathname);
+            return jsonResponse(response.status, errorDataForClient, req.method || 'DELETE', url.pathname);
         }
-        return noContentResponse(req.method, url.pathname); // 204 No Content
+        return noContentResponse(req.method || 'DELETE', url.pathname); // 204 No Content
     } catch (error) {
         console.error("Error deleting webhook via Twitter API (DELETE /webhooks/:id):", error);
-        return jsonResponse(500, { error: "Internal server error while deleting webhook." }, req.method, url.pathname);
+        return jsonResponse(500, { error: "Internal server error while deleting webhook." }, req.method || 'DELETE', url.pathname);
     }
 }
 
@@ -169,7 +169,7 @@ async function replayWebhookEvents(req: VercelRequest, url: URL, webhookId: stri
     const bearerToken = process.env.X_BEARER_TOKEN;
     if (!bearerToken) {
         console.error(`X_BEARER_TOKEN not found for POST /api/webhooks/${webhookId}/replay.`);
-        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method, url.pathname);
+        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method || 'POST', url.pathname);
     }
 
     try {
@@ -177,12 +177,12 @@ async function replayWebhookEvents(req: VercelRequest, url: URL, webhookId: stri
         const to_date = url.searchParams.get('to_date');
 
         if (!from_date || typeof from_date !== 'string' || !to_date || typeof to_date !== 'string') {
-            return jsonResponse(400, { error: "Invalid query parameters: 'from_date' and 'to_date' are required strings in YYYYMMDDHHmm format representing local time." }, req.method, url.pathname);
+            return jsonResponse(400, { error: "Invalid query parameters: 'from_date' and 'to_date' are required strings in YYYYMMDDHHmm format representing local time." }, req.method || 'POST', url.pathname);
         }
         
         // Basic validation for YYYYMMDDHHmm format (length 12, all digits)
         if (from_date.length !== 12 || !/^[0-9]+$/.test(from_date) || to_date.length !== 12 || !/^[0-9]+$/.test(to_date)) {
-            return jsonResponse(400, { error: "Invalid date format in query parameters: 'from_date' and 'to_date' must be in YYYYMMDDHHmm format representing local time." }, req.method, url.pathname);
+            return jsonResponse(400, { error: "Invalid date format in query parameters: 'from_date' and 'to_date' must be in YYYYMMDDHHmm format representing local time." }, req.method || 'POST', url.pathname);
         }
 
         const from_date_utc = convertLocalYYYYMMDDHHmmToUTC(from_date);
@@ -210,7 +210,7 @@ async function replayWebhookEvents(req: VercelRequest, url: URL, webhookId: stri
         if (response.status === 200) { // OK
             const responseData = await response.json() as XReplaySuccessResponse;
             console.log(`[DEBUG] X API Replay request successful for webhook ${webhookId}. Job ID: ${responseData?.data?.job_id}`);
-            return jsonResponse(200, responseData, req.method, url.pathname); // Forward X API's response
+            return jsonResponse(200, responseData, req.method || 'POST', url.pathname); // Forward X API's response
         }
         
         // Handle X API errors
@@ -226,12 +226,12 @@ async function replayWebhookEvents(req: VercelRequest, url: URL, webhookId: stri
             errorDataForClient.details = errorDetails;
         }
         console.error(`X API Replay Error: ${response.status}`, errorDetails);
-        return jsonResponse(response.status, errorDataForClient, req.method, url.pathname);
+        return jsonResponse(response.status, errorDataForClient, req.method || 'POST', url.pathname);
 
     } catch (error) {
         // No SyntaxError check needed here as we are not parsing a request body
         console.error("Error processing replay request (POST /api/webhooks/:id/replay):", error);
-        return jsonResponse(500, { error: "Internal server error while requesting event replay." }, req.method, url.pathname);
+        return jsonResponse(500, { error: "Internal server error while requesting event replay." }, req.method || 'POST', url.pathname);
     }
 }
 
@@ -240,7 +240,7 @@ async function getWebhookSubscriptions(req: VercelRequest, url: URL, webhookId: 
     const bearerToken = process.env.X_BEARER_TOKEN; // This API uses Bearer Token
     if (!bearerToken) {
         console.error(`X_BEARER_TOKEN not found for GET /api/webhooks/${webhookId}/subscriptions.`);
-        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method, url.pathname);
+        return jsonResponse(500, { error: "Server configuration error: Missing API token." }, req.method || 'GET', url.pathname);
     }
     try {
         const twitterApiUrl = `https://api.twitter.com/2/account_activity/webhooks/${webhookId}/subscriptions/all/list`;
@@ -255,7 +255,7 @@ async function getWebhookSubscriptions(req: VercelRequest, url: URL, webhookId: 
         const twitterResponseData = await response.json() as any; 
         if (!response.ok) {
             console.error(`Twitter API GET Subscriptions Error: ${response.status} ${response.statusText}`, twitterResponseData);
-            return jsonResponse(response.status, { error: "Failed to fetch subscriptions from Twitter API.", details: twitterResponseData }, req.method, url.pathname);
+            return jsonResponse(response.status, { error: "Failed to fetch subscriptions from Twitter API.", details: twitterResponseData }, req.method || 'GET', url.pathname);
         }
 
         let subscriptions = [];
@@ -265,11 +265,11 @@ async function getWebhookSubscriptions(req: VercelRequest, url: URL, webhookId: 
             console.warn("Twitter API GET Subscriptions: Response structure was not as expected or no subscriptions array.", twitterResponseData);
         }
         
-        return jsonResponse(200, { data: subscriptions, meta: { result_count: subscriptions.length } }, req.method, url.pathname);
+        return jsonResponse(200, { data: subscriptions, meta: { result_count: subscriptions.length } }, req.method || 'GET', url.pathname);
 
     } catch (error) {
         console.error(`Error fetching subscriptions for webhook ${webhookId} from Twitter API:`, error);
-        return jsonResponse(500, { error: "Internal server error while fetching subscriptions." }, req.method, url.pathname);
+        return jsonResponse(500, { error: "Internal server error while fetching subscriptions." }, req.method || 'GET', url.pathname);
     }
 }
 
@@ -324,7 +324,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (webhookId) {
         const result = await validateWebhook(req, url, webhookId);
         if (result.body === null) {
-          return res.status(result.status).send();
+          return res.status(result.status).send('');
         }
         return res.status(result.status).json(result.body);
       }
@@ -336,7 +336,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (webhookId) {
         const result = await deleteWebhook(req, url, webhookId);
         if (result.body === null) {
-          return res.status(result.status).send();
+          return res.status(result.status).send('');
         }
         return res.status(result.status).json(result.body);
       }
