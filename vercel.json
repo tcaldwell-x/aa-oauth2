@@ -1,19 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.{js,ts}",
-      "use": "@vercel/node@4.0.0"
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
+  "functions": {
+    "api/**/*.{js,ts}": {
+      "runtime": "@vercel/node@4.0.0"
     }
-  ],
+  },
   "routes": [
     {
       "src": "/",
