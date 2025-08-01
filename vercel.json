@@ -23,6 +23,10 @@
       "dest": "/index.html"
     },
     {
+      "src": "/webhooks/twitter",
+      "dest": "/api/webhooks/twitter"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
