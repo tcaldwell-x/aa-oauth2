@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "outputDirectory": ".",
   "functions": {
     "api/**/*.{js,ts}": {
       "runtime": "@vercel/node@4.0.0"
