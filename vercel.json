@@ -7,62 +7,6 @@
     {
       "src": "api/**/*.ts",
       "use": "@vercel/node@4.0.0"
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/health",
-      "dest": "/api/health"
-    },
-    {
-      "src": "/api/test",
-      "dest": "/api/test"
-    },
-    {
-      "src": "/api/webhooks/(.*)",
-      "dest": "/api/webhooks"
-    },
-    {
-      "src": "/api/users/(.*)",
-      "dest": "/api/users"
-    },
-    {
-      "src": "/webhooks/twitter",
-      "dest": "/api/webhooks/twitter"
-    },
-    {
-      "src": "/public/(.*)",
-      "dest": "/public/$1"
-    },
-    {
-      "src": "/",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/api/[...path]"
-    }
-  ],
-  "functions": {
-    "api/webhooks/index.ts": {
-      "maxDuration": 30
-    },
-    "api/webhooks/twitter.ts": {
-      "maxDuration": 30
-    },
-    "api/users/index.ts": {
-      "maxDuration": 30
-    }
-  },
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
